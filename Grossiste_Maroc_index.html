@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grossiste Maroc | Panier + / − (test Supabase)</title>
+<meta name="description" content="Grossiste Maroc : accessoires de cuisine, produits de nettoyage, rangement et articles pratiques pour la maison, en gros et au détail au Maroc. Commande simple via WhatsApp.">
+<meta name="theme-color" content="#0b4d2e">
+<meta property="og:title" content="Grossiste Maroc | Articles ménagers en gros et au détail">
+<meta property="og:description" content="Articles ménagers en gros et au détail au Maroc. Commandez facilement via WhatsApp.">
+<meta property="og:type" content="website">
+
+<style>
+/* ==========================================================
+   1. VARIABLES ET BASE
+   ========================================================== */
+:root {
+  --green: #0b4d2e;
+  --green-2: #137a47;
+  --green-soft: #e8f3ec;
+  --orange: #f57c00;
+  --orange-dark: #d46a00;
+  --white: #ffffff;
+  --bg: #f4f7f5;
+  --text: #1d2b24;
+  --muted: #5d6b63;
+  --border: #dfe7e2;
+  --danger: #c62828;
+  --radius: 14px;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+  --off: 100%;               /* position de départ des panneaux (LTR) */
+}
+html[dir="rtl"] { --off: -100%; }   /* en arabe, le panneau arrive de la gauche */
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }  /* l'attribut hidden doit toujours cacher l'élément */
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Roboto, "Noto Sans Arabic", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding-bottom: 80px; /* place pour la barre panier mobile */
+}
+
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+img { max-width: 100%; }
+
+h1, h2, h3 { margin: 0 0 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; color: var(--green); }
+p { margin: 0 0 10px; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.section { margin-top: 26px; }
+.section-head { margin-bottom: 12px; }
+.muted { color: var(--muted); font-size: 0.92rem; }
+.empty { color: var(--muted); text-align: center; padding: 24px 8px; }
+
+/* ==========================================================
+   2. BOUTONS
+   ========================================================== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 10px 18px; border: none; border-radius: 12px;
+  font-weight: 700; font-size: 1rem; text-decoration: none; text-align: center;
+  transition: transform 0.1s, background 0.2s;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { background: #b8c4bd !important; cursor: not-allowed; }
+.btn-orange { background: var(--orange); color: var(--white); }
+.btn-orange:hover { background: var(--orange-dark); }
+.btn-green { background: var(--green); color: var(--white); }
+.btn-green:hover { background: var(--green-2); }
+.btn-wa { background: #25d366; color: #fff; }
+.btn-wa:hover { background: #1ebe5b; }
+.btn-ghost { background: var(--white); color: var(--green); border: 2px solid var(--green); }
+.btn-block { width: 100%; }
+.link-btn { background: none; border: none; color: var(--danger); padding: 6px; min-height: 40px; font-weight: 600; }
+.icon-btn { background: none; border: none; font-size: 1.2rem; min-height: 44px; min-width: 44px; color: var(--white); }
+
+/* ==========================================================
+   3. EN-TÊTE ET RECHERCHE
+   ========================================================== */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--green); color: var(--white);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.topbar-inner {
+  max-width: 1100px; margin: 0 auto; padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.logo { font-size: 1.25rem; font-weight: 800; letter-spacing: 0.2px; }
+.logo span { color: #ffb74d; }
+.top-actions { display: flex; align-items: center; gap: 6px; }
+.lang-btn {
+  background: rgba(255, 255, 255, 0.15); color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 10px;
+  min-height: 40px; padding: 6px 12px; font-weight: 700;
+}
+.cart-btn { position: relative; }
+.badge {
+  position: absolute; top: 0; inset-inline-end: 0;
+  background: var(--orange); color: var(--white);
+  border-radius: 999px; min-width: 20px; height: 20px; padding: 0 5px;
+  font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
+}
+.badge[hidden] { display: none; }
+
+.search-wrap { background: var(--green); padding: 0 16px 14px; }
+.search-wrap input {
+  width: 100%; max-width: 1100px; display: block; margin: 0 auto;
+  min-height: 48px; padding: 10px 16px; border-radius: 12px; border: none;
+  font-size: 1rem; background: var(--white); color: var(--text); outline: none;
+}
+.search-wrap input:focus { box-shadow: 0 0 0 3px #ffb74d; }
+
+/* ==========================================================
+   4. BANNIÈRE ET CATÉGORIES
+   ========================================================== */
+.promo {
+  background: linear-gradient(120deg, var(--green) 0%, var(--green-2) 100%);
+  color: var(--white); border-radius: var(--radius);
+  padding: 22px 20px; box-shadow: var(--shadow);
+}
+.promo h1 { font-size: 1.5rem; color: var(--white); }
+.promo p { opacity: 0.95; }
+.promo .btn { margin-top: 6px; }
+
+.cats { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; scrollbar-width: none; }
+.cats::-webkit-scrollbar { display: none; }
+.chip {
+  flex: 0 0 auto; min-height: 42px; padding: 8px 16px; border-radius: 999px;
+  border: 2px solid var(--green); background: var(--white); color: var(--green); font-weight: 700;
+}
+.chip[aria-pressed="true"] { background: var(--green); color: var(--white); }
+
+/* ==========================================================
+   5. CARTES PRODUITS
+   ========================================================== */
+.grid {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 980px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+
+.card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 12px; display: flex; flex-direction: column; border: 1px solid var(--border);
+}
+.card-img {
+  height: 110px; border-radius: 10px; background: var(--green-soft);
+  display: flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 10px;
+}
+.card-img img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
+.card-img img { cursor: zoom-in; }
+.card-img:has(img) { cursor: zoom-in; }
+
+/* Affichage agrandi de la photo produit */
+.image-viewer {
+  position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center;
+  justify-content: center; padding: 18px; background: rgba(0, 0, 0, .88);
+}
+.image-viewer[hidden] { display: none !important; }
+.image-viewer img {
+  display: block; max-width: 96vw; max-height: 88vh; width: auto; height: auto;
+  object-fit: contain; border-radius: 10px; background: #fff; box-shadow: 0 8px 36px rgba(0,0,0,.35);
+}
+.image-viewer-close {
+  position: absolute; top: max(12px, env(safe-area-inset-top)); right: 14px;
+  width: 44px; height: 44px; border: 0; border-radius: 50%; background: #fff;
+  color: #111; font-size: 30px; line-height: 1; font-weight: 700; cursor: pointer;
+}
+.image-viewer-hint { position: absolute; bottom: max(12px, env(safe-area-inset-bottom));
+  color: #fff; font-size: .9rem; text-align: center; }
+.img-note { display: block; color: var(--muted); font-size: 0.75rem; text-align: center; margin: -4px 0 6px; }
+.card h3 { font-size: 1rem; }
+.card .desc { color: var(--muted); font-size: 0.88rem; flex: 1; margin-bottom: 8px; }
+.price-retail { font-size: 1.15rem; font-weight: 800; color: var(--green); }
+.price-label { font-size: 0.8rem; color: var(--muted); }
+.wholesale {
+  background: #fff4e5; color: #8a4b00; border-radius: 8px;
+  padding: 6px 8px; font-size: 0.85rem; margin: 8px 0;
+}
+.stock { font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; }
+.stock.in { color: var(--green-2); }
+.stock.out { color: var(--danger); }
+.card .btn { width: 100%; min-height: 46px; padding: 8px; font-size: 0.95rem; }
+
+/* ==========================================================
+   6. SECTIONS D'INFORMATION
+   ========================================================== */
+.demo-note {
+  background: #fff8e1; border: 1px dashed #f0b429; border-radius: 10px;
+  padding: 8px 12px; font-size: 0.88rem; color: #6b4e00; margin-bottom: 12px;
+}
+.info-box { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+.adv-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px) { .adv-grid { grid-template-columns: repeat(4, 1fr); } }
+.adv {
+  background: var(--white); border-radius: var(--radius); padding: 16px; text-align: center;
+  box-shadow: var(--shadow); font-weight: 700; color: var(--green);
+}
+.adv .ico { font-size: 1.8rem; display: block; margin-bottom: 6px; }
+.cond-list { margin: 0; padding-inline-start: 20px; }
+.cond-list li { margin-bottom: 8px; }
+
+.wa-box {
+  background: var(--green-soft); border-radius: var(--radius); padding: 20px;
+  text-align: center;
+}
+.wa-box .btn { margin-top: 6px; }
+
+footer {
+  background: var(--green); color: var(--white); margin-top: 32px; padding: 24px 16px;
+}
+footer .cols { max-width: 1100px; margin: 0 auto; display: grid; gap: 16px; }
+@media (min-width: 720px) { footer .cols { grid-template-columns: repeat(3, 1fr); } }
+footer h3 { color: #ffb74d; font-size: 1rem; }
+footer a { color: var(--white); }
+footer .copy { text-align: center; opacity: 0.8; font-size: 0.85rem; margin-top: 16px; }
+
+/* ==========================================================
+   7. PANIER (PANNEAU LATÉRAL)
+   ========================================================== */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 80;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+
+.panel {
+  position: fixed; top: 0; bottom: 0; inset-inline-end: 0; z-index: 90;
+  width: min(100%, 440px); background: var(--bg);
+  transform: translateX(var(--off)); transition: transform 0.28s ease;
+  display: flex; flex-direction: column;
+}
+.panel.open { transform: none; }
+.panel-head {
+  background: var(--green); color: var(--white); padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-head h2 { color: var(--white); margin: 0; font-size: 1.15rem; }
+.panel-body { flex: 1; overflow-y: auto; padding: 14px; }
+
+.cart-line {
+  background: var(--white); border-radius: 12px; padding: 10px; margin-bottom: 10px;
+  border: 1px solid var(--border);
+}
+.cart-line-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.cart-line small { color: var(--muted); display: block; }
+.qty { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; }
+.qty { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 4px; background: var(--green-soft); border-radius: 12px; }
+.qty button {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; min-width: 46px; border-radius: 10px;
+  border: 2px solid var(--green); background: var(--white); color: var(--green);
+  font-size: 1.5rem; line-height: 1; font-weight: 900; cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.qty button:active { background: var(--green); color: var(--white); transform: scale(.96); }
+.qty button:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+.qty span { min-width: 42px; text-align: center; font-weight: 900; font-size: 1.15rem; color: var(--text); }
+.qty-label { display: inline-block; margin-inline-end: 8px; margin-top: 10px; color: var(--muted); font-size: .9rem; }
+
+.totals {
+  background: var(--white); border-radius: 12px; padding: 12px; margin: 12px 0;
+  border: 1px solid var(--border);
+}
+.totals .row { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; }
+.totals .grand { font-size: 1.15rem; font-weight: 800; color: var(--green); border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 8px; }
+.totals .sub { font-size: 0.88rem; color: var(--muted); }
+
+.form-box { background: var(--white); border-radius: 12px; padding: 12px; border: 1px solid var(--border); }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-weight: 700; margin-bottom: 4px; font-size: 0.95rem; }
+.field input, .field select {
+  width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 10px;
+  border: 1.5px solid #c9d6cd; background: var(--white); font-size: 1rem;
+}
+.field input:focus, .field select:focus { outline: none; border-color: var(--green-2); box-shadow: 0 0 0 3px var(--green-soft); }
+.field input.invalid, .field select.invalid { border-color: var(--danger); }
+
+.errors {
+  background: #fdecea; color: var(--danger); border-radius: 10px;
+  padding: 10px 14px 10px 28px; margin: 0 0 12px; font-weight: 600;
+}
+.errors[hidden] { display: none; }
+
+.recap {
+  background: var(--white); border: 2px solid var(--green); border-radius: 12px;
+  padding: 12px; margin-top: 12px; white-space: pre-wrap; font-size: 0.92rem; word-break: break-word;
+}
+.recap[hidden] { display: none; }
+.send-hint { font-size: 0.85rem; color: var(--muted); margin: 8px 0 0; }
+
+.panel-foot { padding: 10px 14px 14px; background: var(--white); border-top: 1px solid var(--border); }
+
+/* ==========================================================
+   8. BARRE PANIER MOBILE ET NOTIFICATION
+   ========================================================== */
+.mini-cart {
+  position: fixed; bottom: 0; inset-inline: 0; z-index: 60;
+  background: var(--orange); color: var(--white);
+  padding: 12px 16px; display: none; align-items: center; justify-content: space-between;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15); cursor: pointer; border: none; width: 100%;
+  font-weight: 800; font-size: 1rem; min-height: 56px;
+}
+.mini-cart.show { display: flex; }
+
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--text); color: var(--white); padding: 10px 18px; border-radius: 999px;
+  opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 100; font-weight: 600;
+  max-width: 90%; text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ==========================================================
+     EN-TÊTE
+     ========================================================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">Grossiste <span>Maroc</span></div>
+    <div class="top-actions">
+      <button class="lang-btn" id="langBtn" type="button" aria-label="Changer la langue">Français</button>
+      <button class="icon-btn cart-btn" id="openCartBtn" type="button" aria-label="Ouvrir le panier">
+        🛒<span class="badge" id="cartCount" hidden>0</span>
+      </button>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <input type="search" id="search" placeholder="ابحث عن منتج..." data-i18n-ph="searchPh" aria-label="Rechercher un produit">
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- BANNIÈRE PROMOTIONNELLE -->
+  <section class="section" aria-labelledby="promoTitle">
+    <div class="promo">
+      <h1 id="promoTitle" data-i18n="promoTitle">عروض الجملة والتقسيط</h1>
+      <p data-i18n="promoText">اشري بالجملة بأثمان مناسبة. التوفر يتأكد مع البائع قبل التأكيد.</p>
+      <a href="#products" class="btn btn-orange" data-i18n="shopNow">شوف المنتجات</a>
+    </div>
+  </section>
+
+  <!-- CATÉGORIES -->
+  <section class="section" aria-labelledby="catTitle">
+    <div class="section-head"><h2 id="catTitle" data-i18n="catTitle">الفئات</h2></div>
+    <nav class="cats" id="cats" aria-label="Catégories"></nav>
+  </section>
+
+  <!-- PRODUITS POPULAIRES -->
+  <section class="section" id="products" aria-labelledby="productsTitle">
+    <div class="section-head"><h2 id="productsTitle" data-i18n="productsTitle">المنتجات</h2></div>
+    <div class="demo-note" data-i18n="demoNote">هاد الأثمان هي أثمان البيع بالجملة للبائعين، للباكيت. مصاريف التوصيل تتأكد مع البائع.</div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- OFFRES POUR ACHATS EN QUANTITÉ -->
+  <section class="section" aria-labelledby="offersTitle">
+    <div class="info-box">
+      <h2 id="offersTitle" data-i18n="offersTitle">عروض الكمية</h2>
+      <p class="muted" data-i18n="offersText">كلما زادت الكمية، نقص الثمن. الثمن النهائي يتأكد مع البائع قبل التأكيد.</p>
+    </div>
+  </section>
+
+  <!-- AVANTAGES -->
+  <section class="section" aria-labelledby="advTitle">
+    <div class="section-head"><h2 id="advTitle" data-i18n="advTitle">علاش تشري منا</h2></div>
+    <div class="adv-grid">
+      <div class="adv"><span class="ico">💰</span><span data-i18n="adv1">أثمان مناسبة للجملة والتقسيط</span></div>
+      <div class="adv"><span class="ico">💬</span><span data-i18n="adv2">تأكيد الطلب عبر واتساب</span></div>
+      <div class="adv"><span class="ico">🚚</span><span data-i18n="adv3">توصيل لعدد من المدن، حسب التأكيد</span></div>
+      <div class="adv"><span class="ico">🤝</span><span data-i18n="adv4">دعم مباشر قبل وبعد الطلب</span></div>
+    </div>
+  </section>
+
+  <!-- CONDITIONS DE COMMANDE -->
+  <section class="section" aria-labelledby="condTitle">
+    <div class="info-box">
+      <h2 id="condTitle" data-i18n="condTitle">شروط الطلب</h2>
+      <ul class="cond-list">
+        <li data-i18n="cond1">الطلب غير مؤكد حتى يتحقق البائع من التوفر ويؤكد التفاصيل.</li>
+        <li data-i18n="cond2">الأداء: عربون 20% قبل الشحن، والباقي عند التوصيل إذا كانت هاد الخدمة متاحة.</li>
+        <li data-i18n="cond3">مصاريف التوصيل تتأكد مع البائع حسب المدينة والكمية.</li>
+        <li data-i18n="cond4">الإرجاع والاستبدال: يتم الاتفاق عليهما مع البائع قبل تأكيد الطلب.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- CONTACT WHATSAPP -->
+  <section class="section" aria-labelledby="waTitle">
+    <div class="wa-box">
+      <h2 id="waTitle" data-i18n="waTitle">عندك سؤال؟ كلمنا مباشرة</h2>
+      <p data-i18n="waText">فريقنا كيجاوب عبر واتساب.</p>
+      <a class="btn btn-wa" href="#" data-wa-link data-i18n="waBtn">تواصل عبر واتساب</a>
+    </div>
+  </section>
+</main>
+
+<!-- PIED DE PAGE -->
+<footer>
+  <div class="cols">
+    <div>
+      <h3 data-i18n="footContact">اتصل بنا</h3>
+      <p>WhatsApp : <a href="#" data-wa-link>+212 715 749 574</a></p>
+      <p class="muted" style="color:#dfeee5">Maroc</p>
+    </div>
+    <div>
+      <h3 data-i18n="footConditions">الشروط</h3>
+      <p data-i18n="cond2">الأداء: عربون 20% قبل الشحن، والباقي عند التوصيل إذا كانت هاد الخدمة متاحة.</p>
+    </div>
+    <div>
+      <h3>Grossiste Maroc</h3>
+      <p data-i18n="advTitle">علاش تشري منا</p>
+    </div>
+  </div>
+  <p class="copy" data-i18n="footNote">© Grossiste Maroc. جميع الحقوق محفوظة.</p>
+</footer>
+
+<!-- PANNEAU PANIER -->
+<div class="overlay" id="overlay"></div>
+<aside class="panel" id="cartPanel" aria-label="Panier" aria-hidden="true">
+  <div class="panel-head">
+    <h2 data-i18n="cartTitle">سلة الشراء</h2>
+    <button class="icon-btn" id="closeCartBtn" type="button" aria-label="Fermer">✕</button>
+  </div>
+
+  <div class="panel-body">
+    <div id="cartItems"></div>
+
+    <div class="totals">
+      <div class="row sub"><span data-i18n="subtotal">المجموع الفرعي</span><span id="subTotal">0 DH</span></div>
+      <div class="row grand"><span data-i18n="total">المجموع التقديري</span><span id="grandTotal">0 DH</span></div>
+      <div class="row sub"><span data-i18n="depositLabel">العربون (20%) — حساب تقريبي</span><span id="depositAmt">0 DH</span></div>
+      <div class="row sub"><span data-i18n="balanceLabel">الباقي عند التوصيل — تقريبي</span><span id="balanceAmt">0 DH</span></div>
+      <p class="muted" style="margin:8px 0 0" data-i18n="depositNote">المبلغ تقريبي، ويتأكد مع البائع. مصاريف التوصيل غير مدرجة.</p>
+    </div>
+
+    <form class="form-box" id="orderForm" novalidate>
+      <h3 data-i18n="formTitle" style="color:var(--green)">معلومات التوصيل</h3>
+      <div class="field">
+        <label for="fName" data-i18n="fName">الاسم الكامل</label>
+        <input id="fName" type="text" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="fPhone" data-i18n="fPhone">رقم الهاتف</label>
+        <input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0612345678">
+      </div>
+      <div class="field">
+        <label for="fCity" data-i18n="fCity">المدينة</label>
+        <input id="fCity" type="text" autocomplete="address-level2">
+      </div>
+      <div class="field">
+        <label for="fAddress" data-i18n="fAddress">عنوان التوصيل</label>
+        <input id="fAddress" type="text" autocomplete="street-address">
+      </div>
+      <div class="field">
+        <label for="fPayment" data-i18n="fPayment">طريقة الأداء</label>
+        <select id="fPayment">
+          <option value="" data-i18n="pickPayment">اختار طريقة الأداء</option>
+          <option value="payOpt1" data-i18n="payOpt1">عربون 20% + الباقي عند التوصيل (إذا كان متاحاً)</option>
+          <option value="payOpt2" data-i18n="payOpt2">نتفقو مع البائع</option>
+        </select>
+      </div>
+    </form>
+
+    <div class="errors" id="formErrors" role="alert" hidden></div>
+    <div class="recap" id="recapBox" hidden></div>
+    <p class="send-hint" id="sendHint" data-i18n="sendHint">سيفتح واتساب برسالة جاهزة. اضغط إرسال أنت لتأكيد الإرسال.</p>
+  </div>
+
+  <div class="panel-foot">
+    <button class="btn btn-ghost btn-block" id="recapBtn" type="button" data-i18n="recapBtn" style="margin-bottom:8px">عرض الملخص قبل الإرسال</button>
+    <button class="btn btn-wa btn-block" id="sendWaBtn" type="button" data-i18n="sendWa">أرسل الطلب عبر واتساب</button>
+  </div>
+</aside>
+
+<!-- BARRE PANIER MOBILE -->
+<button class="mini-cart" id="miniCart" type="button">
+  <span id="miniCount">0</span>
+  <span data-i18n="cartBtn">السلة</span>
+  <span id="miniTotal">0 DH</span>
+</button>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div id="imageViewer" class="image-viewer" hidden role="dialog" aria-modal="true" aria-label="صورة المنتوج مكبرة">
+  <button id="imageViewerClose" class="image-viewer-close" type="button" aria-label="إغلاق الصورة">×</button>
+  <img id="imageViewerPhoto" src="" alt="صورة المنتوج مكبرة">
+  <div class="image-viewer-hint">ضغط على الخلفية أو × باش تسد الصورة</div>
+</div>
+<script>
+/* ==========================================================
+   9. CONFIGURATION (à modifier facilement)
+   ========================================================== */
+const CONFIG = {
+  whatsappNumber: "212715749574", // format international, sans espaces ni +
+  depositRate: 0.20,
+  currency: "DH",
+  storageKey: "grossiste_maroc_panier_v1",
+  supabaseUrl: "https://ttakxxymgrwltpqbpmro.supabase.co",
+  supabaseKey: "sb_publishable_QuUc8BMXa9B0XV2NimF-bA_H7WLVQcW"
+};
+
+/* ==========================================================
+   10. TEXTES EN ARABE ET EN FRANÇAIS
+   Les clés sont utilisées par data-i18n et par le JavaScript.
+   ========================================================== */
+const UI = {
+  ar: {
+    brand: "Grossiste Maroc", searchPh: "ابحث عن منتج...", cartBtn: "السلة", langBtn: "Français",
+    promoTitle: "عروض الجملة والتقسيط", promoText: "اشري بالجملة بأثمان مناسبة. التوفر يتأكد مع البائع قبل التأكيد.", shopNow: "شوف المنتجات",
+    catTitle: "الفئات", allCats: "الكل", productsTitle: "المنتجات",
+    demoNote: "هاد الأثمان هي أثمان البيع بالجملة للبائعين، للباكيت. مصاريف التوصيل تتأكد مع البائع.",
+    noResults: "ما لقيناش منتجات بهاد البحث.", addBtn: "أضف إلى السلة", outStock: "غير متوفر حالياً", inStock: "متوفر", stockCheck: "التوفر يتأكد مع البائع",
+    retailLabel: "ثمن البيع", minOrderLabel: "الحد الأدنى للطلب", units: "وحدة", packLabel: "الكولي", askOffer: "اطلب عرض خاص", offerNote: "الثمن ينقص حسب الكمية: اطلب عرض خاص عبر واتساب", msgOfferTag: "(الثمن ينقص حسب الكمية: عرض خاص مطلوب)", offerMsg: "السلام، بغيت عرض خاص بالكمية لهاد المنتج:", imgNote: "صورة توضيحية", wholesaleLabel: "ثمن الجملة", minQtyLabel: "ابتداءً من", pcs: "قطعة",
+    offersTitle: "عروض الكمية", offersText: "كلما زادت الكمية، نقص الثمن. الثمن النهائي يتأكد مع البائع قبل التأكيد.",
+    advTitle: "علاش تشري منا", adv1: "أثمان مناسبة للجملة والتقسيط", adv2: "تأكيد الطلب عبر واتساب",
+    adv3: "توصيل لعدد من المدن، حسب التأكيد", adv4: "دعم مباشر قبل وبعد الطلب",
+    condTitle: "شروط الطلب",
+    cond1: "الطلب غير مؤكد حتى يتحقق البائع من التوفر ويؤكد التفاصيل.",
+    cond2: "الأداء: عربون 20% قبل الشحن، والباقي عند التوصيل إذا كانت هاد الخدمة متاحة.",
+    cond3: "مصاريف التوصيل تتأكد مع البائع حسب المدينة والكمية.",
+    cond4: "الإرجاع والاستبدال: يتم الاتفاق عليهما مع البائع قبل تأكيد الطلب.",
+    waTitle: "عندك سؤال؟ كلمنا مباشرة", waText: "فريقنا كيجاوب عبر واتساب.", waBtn: "تواصل عبر واتساب",
+    footContact: "اتصل بنا", footConditions: "الشروط", footNote: "© Grossiste Maroc. جميع الحقوق محفوظة.",
+    cartTitle: "سلة الشراء", cartEmpty: "السلة فارغة. زيد منتجات باش تبدأ.",
+    remove: "حذف", subtotal: "المجموع الفرعي", total: "المجموع التقديري",
+    depositLabel: "العربون (20%) — حساب تقريبي", balanceLabel: "الباقي عند التوصيل — تقريبي",
+    depositNote: "المبلغ تقريبي، ويتأكد مع البائع. مصاريف التوصيل غير مدرجة.",
+    formTitle: "معلومات التوصيل", fName: "الاسم الكامل", fPhone: "رقم الهاتف", fCity: "المدينة",
+    fAddress: "عنوان التوصيل", fPayment: "طريقة الأداء", payOpt1: "عربون 20% + الباقي عند التوصيل (إذا كان متاحاً)",
+    payOpt2: "نتفقو مع البائع", pickPayment: "اختار طريقة الأداء",
+    recapBtn: "عرض الملخص قبل الإرسال", recapTitle: "ملخص الطلب", sendWa: "أرسل الطلب عبر واتساب",
+    sendHint: "سيفتح واتساب برسالة جاهزة. اضغط إرسال أنت لتأكيد الإرسال.",
+    errName: "دخل اسمك (حرفين على الأقل).", errPhone: "رقم الهاتف غير صحيح. مثال: 0612345678",
+    errCity: "دخل المدينة.", errAddress: "دخل عنوان التوصيل.", errPayment: "اختار طريقة الأداء.", errCart: "السلة فارغة.",
+    added: "تمت الإضافة إلى السلة", removed: "تم حذف المنتج",
+    msgIntro: "السلام، بغيت نطلب هاد المنتجات:", msgProducts: "المنتجات", msgTotal: "المجموع التقديري",
+    msgDeposit: "العربون التقريبي (20%)", msgClient: "معلومات الزبون",
+    msgNote: "الطلب غير مؤكد حتى تأكدو التوفر والتوصيل والعربون. شكراً.",
+    close: "إغلاق"
+  },
+  fr: {
+    brand: "Grossiste Maroc", searchPh: "Rechercher un produit...", cartBtn: "Panier", langBtn: "العربية",
+    promoTitle: "Offres en gros et au détail", promoText: "Achetez en gros à prix adaptés. La disponibilité est confirmée avec le vendeur avant validation.", shopNow: "Voir les produits",
+    catTitle: "Catégories", allCats: "Tout", productsTitle: "Produits",
+    demoNote: "Prix de vente en gros, par paquet. Les frais de livraison sont confirmés avec le vendeur.",
+    noResults: "Aucun produit ne correspond à votre recherche.", addBtn: "Ajouter au panier", outStock: "Rupture de stock", inStock: "Disponible", stockCheck: "Disponibilité à confirmer avec le vendeur",
+    retailLabel: "Prix de vente", minOrderLabel: "Commande minimale", units: "unités", packLabel: "Colis", askOffer: "Demander une offre personnalisée", offerNote: "Prix dégressif : demandez une offre personnalisée sur WhatsApp", msgOfferTag: "(prix dégressif : offre personnalisée demandée)", offerMsg: "Bonjour, je souhaite une offre personnalisée pour :", imgNote: "Image illustrative", wholesaleLabel: "Prix de gros", minQtyLabel: "à partir de", pcs: "pièces",
+    offersTitle: "Offres par quantité", offersText: "Plus la quantité est grande, plus le prix baisse. Le prix final est confirmé par le vendeur.",
+    advTitle: "Pourquoi nous choisir", adv1: "Prix adaptés au gros et au détail", adv2: "Commande confirmée via WhatsApp",
+    adv3: "Livraison selon votre ville, sur confirmation", adv4: "Accompagnement avant et après commande",
+    condTitle: "Conditions de commande",
+    cond1: "La commande n'est pas confirmée tant que le vendeur n'a pas vérifié le stock et validé les détails.",
+    cond2: "Paiement : acompte de 20 % avant expédition, solde à la livraison si ce service est disponible.",
+    cond3: "Les frais de livraison sont confirmés par le vendeur selon la ville et la quantité.",
+    cond4: "Retours et échanges : convenus avec le vendeur avant validation de la commande.",
+    waTitle: "Une question ? Écrivez-nous", waText: "Notre équipe répond sur WhatsApp.", waBtn: "Contacter sur WhatsApp",
+    footContact: "Contact", footConditions: "Conditions", footNote: "© Grossiste Maroc. Tous droits réservés.",
+    cartTitle: "Mon panier", cartEmpty: "Votre panier est vide. Ajoutez des produits pour commencer.",
+    remove: "Supprimer", subtotal: "Sous-total", total: "Total estimé",
+    depositLabel: "Acompte 20 % — indicatif", balanceLabel: "Solde à la livraison — indicatif",
+    depositNote: "Montants indicatifs, à confirmer avec le vendeur. Frais de livraison non inclus.",
+    formTitle: "Informations de livraison", fName: "Nom complet", fPhone: "Numéro de téléphone", fCity: "Ville",
+    fAddress: "Adresse de livraison", fPayment: "Mode de paiement souhaité",
+    payOpt1: "Acompte 20 % + solde à la livraison (si disponible)", payOpt2: "À convenir avec le vendeur",
+    pickPayment: "Choisissez un mode de paiement",
+    recapBtn: "Voir le récapitulatif", recapTitle: "Récapitulatif de la commande", sendWa: "Envoyer la commande sur WhatsApp",
+    sendHint: "WhatsApp s'ouvrira avec un message prêt. Appuyez sur Envoyer pour confirmer l'envoi.",
+    errName: "Entrez votre nom (2 caractères minimum).", errPhone: "Numéro invalide. Exemple : 0612345678",
+    errCity: "Entrez votre ville.", errAddress: "Entrez votre adresse de livraison.",
+    errPayment: "Choisissez un mode de paiement.", errCart: "Votre panier est vide.",
+    added: "Ajouté au panier", removed: "Produit supprimé",
+    msgIntro: "Bonjour, je souhaite passer cette commande :", msgProducts: "Produits", msgTotal: "Total estimé",
+    msgDeposit: "Acompte indicatif (20 %)", msgClient: "Mes coordonnées",
+    msgNote: "Commande non confirmée tant que vous n'avez pas vérifié le stock, les frais de livraison et l'acompte. Merci.",
+    close: "Fermer"
+  }
+};
+
+/* ==========================================================
+   11. CATÉGORIES
+   ========================================================== */
+const CATEGORIES = [
+  { id: "cuisine",   name: { ar: "accessoires المطبخ", fr: "Accessoires de cuisine" } },
+  { id: "nettoyage", name: { ar: "منتجات التنظيف", fr: "Produits de nettoyage" } },
+  { id: "rangement", name: { ar: "التخزين والتنظيم", fr: "Rangement et organisation" } },
+  { id: "maison",    name: { ar: "أدوات عملية للمنزل", fr: "Accessoires pratiques maison" } },
+  { id: "agricole",  name: { ar: "أدوات الفلاحة", fr: "Outils agricoles" } }
+];
+
+/* ==========================================================
+   12. PRODUITS
+   Prix affichés = prix de VENTE EN GROS uniquement, par paquet.
+   Aucun prix d'achat ni marge ne doit figurer dans ce fichier.
+   cartonQty = nombre de paquets par carton (donnée interne, non affichée).
+   ========================================================== */
+const PRODUCT_TEMPLATES = [
+  { id: "P001", cat: "maison", icon: "🗑️", stock: true, price: 3.20, wholesale: null, minQty: 0, cartonQty: 182, priceNote: { ar: "للباكيت", fr: "par paquet" }, illustrative: true,
+    img: "data:image/webp;base64,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",
+    name: { ar: "أكياس الزبالة السوداء 35 لتر — باكيت 10 قطع", fr: "Sacs poubelle noirs 35 L — paquet de 10 pièces" },
+    desc: { ar: "أكياس زبالة سوداء 35 لتر، الباكيت فيه 10 قطع.", fr: "Sacs poubelle noirs 35 L, paquet de 10 pièces." } },
+  { id: "P002", cat: "maison", icon: "🗑️", stock: true, price: 10.50, wholesale: null, minQty: 0, cartonQty: 42, priceNote: { ar: "للباكيت", fr: "par paquet" }, illustrative: true,
+    img: "data:image/webp;base64,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",
+    name: { ar: "أكياس الزبالة السوداء 35 لتر — باكيت 40 قطعة", fr: "Sacs poubelle noirs 35 L — paquet de 40 pièces" },
+    desc: { ar: "أكياس زبالة سوداء 35 لتر، الباكيت فيه 40 قطعة.", fr: "Sacs poubelle noirs 35 L, paquet de 40 pièces." } },
+  { id: "P003", cat: "maison", icon: "🗑️", stock: true, price: 12.50, wholesale: null, minQty: 0, cartonQty: 48, priceNote: { ar: "للباكيت", fr: "par paquet" }, illustrative: true,
+    img: "data:image/webp;base64,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",
+    name: { ar: "أكياس الزبالة السوداء 50 لتر — باكيت 30 قطعة", fr: "Sacs poubelle noirs 50 L — paquet de 30 pièces" },
+    desc: { ar: "أكياس زبالة سوداء 50 لتر، الباكيت فيه 30 قطعة.", fr: "Sacs poubelle noirs 50 L, paquet de 30 pièces." } },
+  { id: "P004", cat: "agricole", icon: "🫒", stock: true, price: 4.50, wholesale: null, minQty: 0, cartonQty: null,
+    priceNote: { ar: "للوحدة", fr: "par unité" }, minOrder: 50, unitPack: 200, askOffer: true, illustrative: true,
+    img: "data:image/webp;base64,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",
+    name: { ar: "مشط بلاستيك لجمع الزيتون", fr: "Peigne en plastique pour la récolte des olives" },
+    desc: { ar: "أداة يدوية بمقبض ومشط بلاستيكي لجمع حبات الزيتون.", fr: "Outil manuel avec manche et dents en plastique pour la récolte des olives." } }
+];
+
+// Les produits affichés sont chargés depuis Supabase ; les modèles ci-dessus
+// servent uniquement à conserver les images et traductions déjà présentes.
+let PRODUCTS = [];
+let productsLoadError = false;
+
+function productFromRow(row) {
+  const template = PRODUCT_TEMPLATES.find(p => Math.abs(Number(p.price) - Number(row.price)) < 0.001) || {};
+  const arName = row.name || template.name?.ar || "Produit";
+  const frName = template.name?.fr || arName;
+  const arDesc = row.description || template.desc?.ar || "";
+  const frDesc = template.desc?.fr || arDesc;
+  const qty = Number(row.stock_quantity || 0);
+  return {
+    ...template,
+    id: String(row.id),
+    cat: row.category || template.cat || "maison",
+    name: { ar: arName, fr: frName },
+    desc: { ar: arDesc, fr: frDesc },
+    price: Number(row.price || 0),
+    wholesale: row.wholesale_price == null ? null : Number(row.wholesale_price),
+    minQty: template.minQty || 0,
+    // Minimum order disabled in this storefront; customers may order from 1 unit.
+    minOrder: 1,
+    unitPack: row.unit_pack == null ? (template.unitPack || null) : Number(row.unit_pack),
+    askOffer: Boolean(row.ask_offer),
+    img: row.image_url || template.img || "",
+    // stock_quantity=0 is currently a placeholder/unknown, not proof of out-of-stock.
+    stockKnown: qty > 0,
+    stock: true
+  };
+}
+
+async function loadSupabaseProducts() {
+  const url = `${CONFIG.supabaseUrl}/rest/v1/gm_products?select=id,name,description,category,price,wholesale_price,stock_quantity,min_order,unit_pack,ask_offer,image_url,is_active&is_active=eq.true&order=created_at.asc`;
+  const response = await fetch(url, {
+    headers: { apikey: CONFIG.supabaseKey, Authorization: `Bearer ${CONFIG.supabaseKey}` }
+  });
+  if (!response.ok) throw new Error(`Supabase products HTTP ${response.status}`);
+  const rows = await response.json();
+  PRODUCTS = rows.map(productFromRow);
+  // Remove stale items from a previously saved basket that are no longer active.
+  Object.keys(cart).forEach(id => { if (!PRODUCTS.some(p => p.id === id)) delete cart[id]; });
+  saveCart();
+}
+
+/* ==========================================================
+   13. ÉTAT DE L'APPLICATION
+   ========================================================== */
+let lang = "ar";        // "ar" ou "fr"
+let activeCat = "all";  // filtre par catégorie
+let searchTerm = "";    // recherche
+let cart = {};          // { productId: quantité }
+
+/* ==========================================================
+   14. OUTILS
+   ========================================================== */
+const $ = (sel) => document.querySelector(sel);
+const t = (key) => (UI[lang] && UI[lang][key]) || key;
+const pName = (p) => p.name[lang];
+const pDesc = (p) => p.desc[lang];
+
+// Protège le HTML inséré avec innerHTML
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Arrondi à 2 décimales
+const r2 = (n) => Math.round(n * 100) / 100;
+
+// Affichage d'un montant
+const fmt = (n) => `${r2(n).toFixed(2).replace(".", ",")} ${CONFIG.currency}`;
+
+// Prix unitaire : prix de gros seulement si la quantité minimale est atteinte
+function unitPrice(p, qty) {
+  return (p.wholesale && qty >= p.minQty) ? p.wholesale : p.price;
+}
+
+// Lignes du panier, avec les produits réellement trouvés
+function cartLines() {
+  return Object.keys(cart)
+    .map((id) => PRODUCTS.find((p) => p.id === id))
+    .filter(Boolean)
+    .map((p) => {
+      const qty = cart[p.id];
+      const price = unitPrice(p, qty);
+      return { p, qty, price, line: r2(price * qty) };
+    });
+}
+
+// Totaux : sous-total, acompte et solde indicatifs
+function totals() {
+  const sub = r2(cartLines().reduce((sum, l) => sum + l.line, 0));
+  const deposit = r2(sub * CONFIG.depositRate);
+  return { sub, deposit, balance: r2(sub - deposit) };
+}
+
+function toast(msgKey) {
+  const el = $("#toast");
+  el.textContent = t(msgKey);
+  el.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+/* ==========================================================
+   15. SAUVEGARDE DU PANIER (localStorage, facultatif)
+   ========================================================== */
+function saveCart() {
+  try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(cart)); } catch (e) { /* navigation privée : ignoré */ }
+}
+
+function loadCart() {
+  try {
+    const raw = localStorage.getItem(CONFIG.storageKey);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.keys(data).forEach((id) => {
+      const qty = parseInt(data[id], 10);
+      if (PRODUCTS.some((p) => p.id === id) && qty > 0) cart[id] = Math.min(qty, 999);
+    });
+  } catch (e) { cart = {}; }
+}
+
+/* ==========================================================
+   16. ACTIONS DU PANIER
+   ========================================================== */
+// Minimum order disabled: every product can be added starting from 1 unit.
+function minOf(p) {
+  return 1;
+}
+
+function addToCart(id) {
+  const p = PRODUCTS.find((x) => x.id === id);
+  if (!p || !p.stock) return;
+  cart[id] = cart[id] ? Math.min(cart[id] + 1, 999) : minOf(p);
+  saveCart();
+  renderAll();
+  toast("added");
+}
+
+function changeQty(id, delta) {
+  const p = PRODUCTS.find((x) => x.id === id);
+  if (!p) return;
+  let next = (cart[id] || 0) + delta;
+  const min = minOf(p);
+  if (next < min) {
+    if (min <= 1) { removeItem(id); return; }
+    next = min;               // on ne descend pas sous la quantité minimale
+  }
+  if (delta > 0 && !p.stock) return;
+  cart[id] = Math.min(next, 999);
+  saveCart();
+  renderAll();
+}
+
+function removeItem(id) {
+  delete cart[id];
+  saveCart();
+  renderAll();
+  toast("removed");
+}
+
+/* ==========================================================
+   17. AFFICHAGE : CATÉGORIES, PRODUITS, PANIER
+   ========================================================== */
+function renderCategories() {
+  const all = [{ id: "all", name: { ar: UI.ar.allCats, fr: UI.fr.allCats } }, ...CATEGORIES];
+  $("#cats").innerHTML = all.map((c) =>
+    `<button class="chip" type="button" data-cat="${esc(c.id)}" aria-pressed="${activeCat === c.id}">${esc(c.name[lang])}</button>`
+  ).join("");
+}
+
+// Lien WhatsApp pour demander une offre personnalisée sur un produit
+function offerUrl(p) {
+  const msg = `${t("offerMsg")} ${pName(p)}`;
+  return `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+}
+
+function productCardHTML(p) {
+  const inStock = p.stock;
+  const stockLabel = p.stockKnown === false ? t("stockCheck") : (inStock ? t("inStock") : t("outStock"));
+  const wholesaleBlock = p.wholesale
+    ? `<div class="wholesale">${esc(t("wholesaleLabel"))} : <strong>${fmt(p.wholesale)}</strong> ${esc(t("minQtyLabel"))} ${p.minQty} ${esc(t("pcs"))}</div>`
+    : "";
+  return `
+    <article class="card">
+      <div class="card-img" aria-hidden="true">${p.img ? `<img src="${esc(p.img)}" alt="${esc(pName(p))}" loading="lazy">` : p.icon}</div>
+      ${p.illustrative ? `<small class="img-note">${esc(t("imgNote"))}</small>` : ""}
+      <h3>${esc(pName(p))}</h3>
+      <p class="desc">${esc(pDesc(p))}</p>
+      <div>
+        <div class="price-label">${esc(t("retailLabel"))}</div>
+        <div class="price-retail">${fmt(p.price)}</div>
+        ${p.priceNote ? `<div class="price-label">${esc(p.priceNote[lang])}</div>` : ""}
+      </div>
+      ${wholesaleBlock}
+      <div class="stock ${inStock ? "in" : "out"}">${esc(stockLabel)}</div>
+      <button class="btn btn-orange" type="button" data-add="${esc(p.id)}" ${inStock ? "" : "disabled"}>${esc(t("addBtn"))}</button>
+      ${p.askOffer ? `<a class="btn btn-wa" style="margin-top:8px" href="${esc(offerUrl(p))}" target="_blank" rel="noopener">${esc(t("askOffer"))}</a>` : ""}
+    </article>`;
+}
+
+function renderProducts() {
+  const term = searchTerm.trim().toLowerCase();
+  const list = PRODUCTS.filter((p) => {
+    const catOk = activeCat === "all" || p.cat === activeCat;
+    const text = (pName(p) + " " + pDesc(p)).toLowerCase();
+    const searchOk = !term || text.includes(term);
+    return catOk && searchOk;
+  });
+  $("#grid").innerHTML = list.length
+    ? list.map(productCardHTML).join("")
+    : `<p class="empty">${esc(t("noResults"))}</p>`;
+}
+
+function renderCart() {
+  const lines = cartLines();
+  const { sub, deposit, balance } = totals();
+
+  $("#cartItems").innerHTML = lines.length ? lines.map((l) => `
+    <div class="cart-line">
+      <div class="cart-line-top">
+        <div>
+          <strong>${esc(pName(l.p))}</strong>
+          <small>${fmt(l.price)} × ${l.qty} = ${fmt(l.line)}</small>
+          ${l.p.askOffer ? `<small>${esc(t("offerNote"))}</small>` : ""}
+        </div>
+        <button class="link-btn" type="button" data-rm="${esc(l.p.id)}">${esc(t("remove"))}</button>
+      </div>
+      <div><span class="qty-label">${lang === "ar" ? "الكمية:" : "Quantité :"}</span><div class="qty">
+        <button type="button" data-dec="${esc(l.p.id)}" aria-label="${lang === "ar" ? "نقص الكمية" : "Diminuer la quantité"}" title="−">−</button>
+        <span aria-live="polite">${l.qty}</span>
+        <button type="button" data-inc="${esc(l.p.id)}" aria-label="${lang === "ar" ? "زيد الكمية" : "Augmenter la quantité"}" title="+">+</button>
+      </div></div>
+    </div>`).join("")
+    : `<p class="empty">${esc(t("cartEmpty"))}</p>`;
+
+  $("#subTotal").textContent = fmt(sub);
+  $("#grandTotal").textContent = fmt(sub);
+  $("#depositAmt").textContent = fmt(deposit);
+  $("#balanceAmt").textContent = fmt(balance);
+}
+
+function updateCounters() {
+  const count = Object.values(cart).reduce((a, b) => a + b, 0);
+  const { sub } = totals();
+  const badge = $("#cartCount");
+  badge.textContent = count;
+  badge.hidden = count === 0;
+  $("#miniCount").textContent = count + " ×";
+  $("#miniTotal").textContent = fmt(sub);
+  $("#miniCart").classList.toggle("show", count > 0);
+}
+
+function renderAll() {
+  renderProducts();
+  renderCart();
+  updateCounters();
+}
+
+/* ==========================================================
+   18. FORMULAIRE, VALIDATION ET RÉCAPITULATIF WHATSAPP
+   ========================================================== */
+function readForm() {
+  return {
+    name: $("#fName").value.trim(),
+    phone: $("#fPhone").value.trim(),
+    city: $("#fCity").value.trim(),
+    address: $("#fAddress").value.trim(),
+    payment: $("#fPayment").value
+  };
+}
+
+function validateForm(d) {
+  const errors = [];
+  const fields = { fName: false, fPhone: false, fCity: false, fAddress: false, fPayment: false };
+
+  if (d.name.length < 2) { errors.push(t("errName")); fields.fName = true; }
+
+  // Numéro marocain : 06, 07 ou 05 (ou +212 / 212 suivi de 5, 6 ou 7)
+  const phone = d.phone.replace(/[\s.\-]/g, "");
+  if (!/^(0[5-7]\d{8}|\+?212[5-7]\d{8})$/.test(phone)) { errors.push(t("errPhone")); fields.fPhone = true; }
+
+  if (!d.city) { errors.push(t("errCity")); fields.fCity = true; }
+  if (!d.address) { errors.push(t("errAddress")); fields.fAddress = true; }
+  if (!d.payment) { errors.push(t("errPayment")); fields.fPayment = true; }
+  if (!cartLines().length) errors.push(t("errCart"));
+
+  Object.keys(fields).forEach((id) => $("#" + id).classList.toggle("invalid", fields[id]));
+  return errors;
+}
+
+function showErrors(list) {
+  const box = $("#formErrors");
+  box.replaceChildren();
+  if (!list.length) { box.hidden = true; return; }
+  const ul = document.createElement("ul");
+  ul.style.margin = "0";
+  list.forEach((msg) => {
+    const li = document.createElement("li");
+    li.textContent = msg;
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  box.hidden = false;
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+// Message complet envoyé au vendeur
+function buildMessage(d) {
+  const { sub, deposit } = totals();
+  const lines = [t("msgIntro"), "", `${t("msgProducts")} :`];
+  cartLines().forEach((l) => {
+    const tag = l.p.askOffer ? ` ${t("msgOfferTag")}` : "";
+    lines.push(`- ${pName(l.p)} | ${l.qty} x ${fmt(l.price)} = ${fmt(l.line)}${tag}`);
+  });
+  lines.push("");
+  lines.push(`${t("msgTotal")} : ${fmt(sub)}`);
+  lines.push(`${t("msgDeposit")} : ${fmt(deposit)}`);
+  lines.push("");
+  lines.push(`${t("msgClient")} :`);
+  lines.push(`${t("fName")} : ${d.name}`);
+  lines.push(`${t("fPhone")} : ${d.phone}`);
+  lines.push(`${t("fCity")} : ${d.city}`);
+  lines.push(`${t("fAddress")} : ${d.address}`);
+  lines.push(`${t("fPayment")} : ${t(d.payment)}`);
+  lines.push("");
+  lines.push(t("msgNote"));
+  return lines.join("\n");
+}
+
+function clearRecap() {
+  $("#recapBox").hidden = true;
+}
+
+// Affiche le récapitulatif (sans ouvrir WhatsApp)
+function showRecap() {
+  const d = readForm();
+  const errors = validateForm(d);
+  showErrors(errors);
+  if (errors.length) { clearRecap(); return; }
+
+  const message = buildMessage(d);
+  $("#recapBox").textContent = `${t("recapTitle")}\n\n${message}`;
+  $("#recapBox").hidden = false;
+  $("#recapBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// Lien WhatsApp : https://wa.me/212715749574?text=... (numéro sans + ni espaces)
+function buildWhatsAppUrl(message) {
+  return `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
+}
+
+// Appelée directement par le clic sur "Envoyer la commande sur WhatsApp".
+// Pas d'appel asynchrone ni de window.open : le clic ouvre WhatsApp.
+// Le client doit confirmer l'envoi lui-même dans WhatsApp.
+function sendWhatsApp() {
+  const d = readForm();
+  const errors = validateForm(d);
+  showErrors(errors);
+  if (errors.length) { clearRecap(); return; }
+
+  const message = buildMessage(d);
+  window.location.href = buildWhatsAppUrl(message);
+}
+
+/* ==========================================================
+   19. PANNEAU PANIER (ouverture / fermeture)
+   ========================================================== */
+function openCart() {
+  $("#cartPanel").classList.add("open");
+  $("#cartPanel").setAttribute("aria-hidden", "false");
+  $("#overlay").classList.add("show");
+}
+function closeCart() {
+  $("#cartPanel").classList.remove("open");
+  $("#cartPanel").setAttribute("aria-hidden", "true");
+  $("#overlay").classList.remove("show");
+}
+
+/* ==========================================================
+   20. LANGUE (arabe RTL / français LTR)
+   ========================================================== */
+function applyStatic() {
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
+    el.setAttribute("placeholder", t(el.dataset.i18nPh));
+  });
+  $("#langBtn").textContent = t("langBtn");
+  $("#search").setAttribute("aria-label", lang === "ar" ? "ابحث عن منتج" : "Rechercher un produit");
+  $("#openCartBtn").setAttribute("aria-label", lang === "ar" ? "فتح السلة" : "Ouvrir le panier");
+}
+
+function setLang(newLang) {
+  lang = newLang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  applyStatic();
+  renderCategories();
+  renderAll();
+}
+
+/* ==========================================================
+   21. LIEN WHATSAPP GÉNÉRAL (contact)
+   ========================================================== */
+function setGeneralWhatsAppLinks() {
+  const greeting = lang === "ar"
+    ? "السلام، بغيت نسول على منتجات Grossiste Maroc."
+    : "Bonjour, je souhaite poser une question à Grossiste Maroc.";
+  const url = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(greeting)}`;
+  document.querySelectorAll("[data-wa-link]").forEach((a) => {
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+  });
+}
+
+/* ==========================================================
+   22. ÉVÉNEMENTS
+   ========================================================== */
+function bindEvents() {
+  // Langue
+  $("#langBtn").addEventListener("click", () => setLang(lang === "ar" ? "fr" : "ar"));
+
+  // Recherche
+  $("#search").addEventListener("input", (e) => {
+    searchTerm = e.target.value;
+    renderProducts();
+  });
+
+  // Catégories (délégation)
+  $("#cats").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-cat]");
+    if (!btn) return;
+    activeCat = btn.dataset.cat;
+    renderCategories();
+    renderProducts();
+  });
+
+  // Agrandir une image produit au clic (sans déclencher l'ajout au panier)
+  const imageViewer = $("#imageViewer");
+  const imageViewerPhoto = $("#imageViewerPhoto");
+  const closeImageViewer = () => {
+    imageViewer.hidden = true;
+    imageViewerPhoto.removeAttribute("src");
+    document.body.style.overflow = "";
+  };
+  $("#grid").addEventListener("click", (e) => {
+    const productImage = e.target.closest(".card-img img");
+    if (productImage) {
+      imageViewerPhoto.src = productImage.currentSrc || productImage.src;
+      imageViewerPhoto.alt = productImage.alt || "صورة المنتوج";
+      imageViewer.hidden = false;
+      document.body.style.overflow = "hidden";
+      return;
+    }
+    const btn = e.target.closest("[data-add]");
+    if (btn) addToCart(btn.dataset.add);
+  });
+  $("#imageViewerClose").addEventListener("click", closeImageViewer);
+  imageViewer.addEventListener("click", (e) => {
+    if (e.target === imageViewer) closeImageViewer();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeImageViewer();
+  });
+
+  // Actions dans le panier (délégation)
+  $("#cartItems").addEventListener("click", (e) => {
+    const inc = e.target.closest("[data-inc]");
+    const dec = e.target.closest("[data-dec]");
+    const rm = e.target.closest("[data-rm]");
+    if (inc) changeQty(inc.dataset.inc, 1);
+    else if (dec) changeQty(dec.dataset.dec, -1);
+    else if (rm) removeItem(rm.dataset.rm);
+  });
+
+  // Ouverture / fermeture du panier
+  $("#openCartBtn").addEventListener("click", openCart);
+  $("#miniCart").addEventListener("click", openCart);
+  $("#closeCartBtn").addEventListener("click", closeCart);
+  $("#overlay").addEventListener("click", closeCart);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCart(); });
+
+  // Récapitulatif et envoi WhatsApp
+  $("#recapBtn").addEventListener("click", showRecap);
+  $("#sendWaBtn").addEventListener("click", sendWhatsApp);
+  $("#orderForm").addEventListener("input", clearRecap);
+  $("#orderForm").addEventListener("change", clearRecap);
+}
+
+/* ==========================================================
+   23. DÉMARRAGE
+   ========================================================== */
+async function init() {
+  bindEvents();
+  setLang("ar");
+  setGeneralWhatsAppLinks();
+  $("#langBtn").addEventListener("click", setGeneralWhatsAppLinks);
+  try {
+    await loadSupabaseProducts();
+    loadCart();
+    renderCategories();
+    renderAll();
+  } catch (error) {
+    console.error("Impossible de charger les produits depuis Supabase:", error);
+    $("#grid").innerHTML = `<p class="empty">${lang === "ar" ? "تعذر تحميل المنتجات دابا. عاود حاول من بعد." : "Impossible de charger les produits pour le moment. Réessayez plus tard."}</p>`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
